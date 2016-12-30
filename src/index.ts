@@ -41,6 +41,7 @@ import { Dialogs } from './plugins/dialogs';
 import { EmailComposer } from './plugins/emailcomposer';
 import { EstimoteBeacons } from './plugins/estimote-beacons';
 import { Facebook } from './plugins/facebook';
+import { FCM } from './plugins/fcm';
 import { File } from './plugins/file';
 import { FileChooser } from './plugins/file-chooser';
 import { FileOpener } from './plugins/file-opener';
@@ -53,8 +54,8 @@ import { Globalization } from './plugins/globalization';
 import { GooglePlus } from './plugins/google-plus';
 import { GoogleMap } from './plugins/googlemap';
 import { GoogleAnalytics } from './plugins/googleanalytics';
-import { Hotspot } from  './plugins/hotspot';
-import { HTTP } from  './plugins/http';
+import { Hotspot } from './plugins/hotspot';
+import { HTTP } from './plugins/http';
 import { Httpd } from './plugins/httpd';
 import { IBeacon } from './plugins/ibeacon';
 import { ImagePicker } from './plugins/imagepicker';
@@ -150,6 +151,7 @@ export * from './plugins/dialogs';
 export * from './plugins/emailcomposer';
 export * from './plugins/estimote-beacons';
 export * from './plugins/facebook';
+export * from './plugins/fcm';
 export * from './plugins/file';
 export * from './plugins/file-chooser';
 export * from './plugins/file-opener';
@@ -261,6 +263,7 @@ window['IonicNative'] = {
   EmailComposer,
   EstimoteBeacons,
   Facebook,
+  FCM,
   File,
   FileChooser,
   FileOpener,
