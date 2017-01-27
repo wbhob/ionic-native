@@ -6,6 +6,98 @@ declare var Promise;
 
 /**
  * @private
+ */
+export interface PluginConfig {
+  /**
+   * Plugin name, this should match the class name
+   */
+  pluginName: string;
+  /**
+   * Plugin NPM package name
+   */
+  plugin: string;
+  /**
+   * Plugin object reference
+   */
+  pluginRef: string;
+  /**
+   * Github repository URL
+   */
+  repo: string;
+  /**
+   * Custom install command
+   */
+  install?: string;
+  /**
+   * Supported platforms
+   */
+  platforms?: string[];
+}
+
+/**
+ * @private
+ */
+export interface CordovaOptions {
+  /**
+   * Set to true if the wrapped method is a sync function
+   */
+  sync?: boolean;
+  /**
+   * Callback order. Set to reverse if the success/error callbacks are the first 2 arguments that the wrapped method takes.
+   */
+  callbackOrder?: 'reverse';
+  /**
+   * Callback style
+   */
+  callbackStyle?: 'node' | 'object';
+  /**
+   * Set a custom index for the success callback function. This doesn't work if callbackOrder or callbackStyle are set.
+   */
+  successIndex?: number;
+  /**
+   * Set a custom index for the error callback function. This doesn't work if callbackOrder or callbackStyle are set.
+   */
+  errorIndex?: number;
+  /**
+   * Success function property name. This must be set if callbackStyle is set to object.
+   */
+  successName?: string;
+  /**
+   * Error function property name. This must be set if callbackStyle is set to object.
+   */
+  errorName?: string;
+  /**
+   * Set to true to return an observable
+   */
+  observable?: boolean;
+  /**
+   * If observable is set to true, this can be set to a different function name that will cancel the observable.
+   */
+  clearFunction?: string;
+  /**
+   * This can be used if clearFunction is set. Set this to true to call the clearFunction with the same arguments used in the initial function.
+   */
+  clearWithArgs?: boolean;
+  /**
+   * Creates an observable that wraps a global event. Replaces document.addEventListener
+   */
+  eventObservable?: boolean;
+  /**
+   * Event name, this must be set if eventObservable is set to true
+   */
+  event?: string;
+  /**
+   * Set to true if the wrapped method returns a promise
+   */
+  otherPromise?: boolean;
+  /**
+   * Supported platforms
+   */
+  platforms?: string[];
+}
+
+/**
+ * @private
  * @param pluginRef
  * @returns {null|*}
  */
@@ -108,7 +200,7 @@ function callCordovaPlugin(pluginObj: any, methodName: string, args: any[], opts
 
   let pluginInstance = getPlugin(pluginObj.pluginRef);
 
-  if (!pluginInstance) {
+  if (!pluginInstance || pluginInstance[methodName] === 'undefined') {
     // Do this check in here in the case that the Web API for this plugin is available (for example, Geolocation).
     if (!window.cordova) {
       cordovaWarn(pluginObj.pluginName, methodName);
@@ -123,8 +215,7 @@ function callCordovaPlugin(pluginObj: any, methodName: string, args: any[], opts
     };
   }
 
-  // TODO: Illegal invocation needs window context
-  return get(window, pluginObj.pluginRef)[methodName].apply(pluginInstance, args);
+  return pluginInstance[methodName].apply(pluginInstance, args);
 }
 
 /**
@@ -304,7 +395,7 @@ function overrideFunction(pluginObj: any, methodName: string, args: any[], opts:
  * @param opts
  * @returns {function(...[any]): (undefined|*|Observable|*|*)}
  */
-export const wrap = function(pluginObj: any, methodName: string, opts: any = {}) {
+export const wrap = function(pluginObj: any, methodName: string, opts: CordovaOptions = {}) {
   return (...args) => {
     if (opts.sync) {
       // Sync doesn't wrap the plugin with a promise or observable, it returns the result as-is
@@ -320,6 +411,7 @@ export const wrap = function(pluginObj: any, methodName: string, opts: any = {})
     }
   };
 };
+
 
 /**
  * @private
@@ -340,7 +432,7 @@ export const wrap = function(pluginObj: any, methodName: string, opts: any = {})
  *  }
  * ```
  */
-export function Plugin(config) {
+export function Plugin(config: PluginConfig) {
   return function(cls) {
 
     // Add these fields to the class
@@ -376,7 +468,7 @@ export function Plugin(config) {
  * Wrap a stub function in a call to a Cordova plugin, checking if both Cordova
  * and the required plugin are installed.
  */
-export function Cordova(opts: any = {}) {
+export function Cordova(opts: CordovaOptions = {}) {
   return (target: Object, methodName: string, descriptor: TypedPropertyDescriptor<any>) => {
     return {
       value: function(...args: any[]) {
@@ -410,7 +502,7 @@ export function CordovaInstance(opts: any = {}) {
 export function CordovaProperty(target: any, key: string) {
   const exists = () => {
     let pluginInstance = getPlugin(target.pluginRef);
-    if (!pluginInstance) {
+    if (!pluginInstance || typeof pluginInstance[key] === 'undefined') {
       pluginWarn(target, key);
       return false;
     }
@@ -422,7 +514,7 @@ export function CordovaProperty(target: any, key: string) {
       if (exists()) {
         return getPlugin(target.pluginRef)[key];
       } else {
-        return {};
+        return null;
       }
     },
     set: (value) => {

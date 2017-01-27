@@ -40,13 +40,6 @@ export interface InAppBrowserEvent extends Event {
 })
 export class InAppBrowser {
 
-  /**
-   * @private
-   */
-  static open(url: string, target?: string, options?: string): void {
-    console.warn('Native: Your current usage of the InAppBrowser plugin is deprecated as of ionic-native@1.3.8. Please check the Ionic Native docs for the latest usage details.');
-  }
-
   private _objectInstance: any;
 
   /**
@@ -81,7 +74,7 @@ export class InAppBrowser {
 
   /**
    * Injects JavaScript code into the InAppBrowser window.
-   * @param script    Details of the script to run, specifying either a file or code key.
+   * @param script {Object} Details of the script to run, specifying either a file or code key.
    * @returns {Promise<any>}
    */
   @CordovaInstance()
@@ -89,11 +82,11 @@ export class InAppBrowser {
 
   /**
    * Injects CSS into the InAppBrowser window.
-   * @param {Object}       Details of the script to run, specifying either a file or code key.
+   * @param css {Object} Details of the script to run, specifying either a file or code key.
    * @returns {Promise<any>}
    */
   @CordovaInstance()
-  insertCss(css: {file?: string, code?: string}): Promise<any> {return; }
+  insertCSS(css: {file?: string, code?: string}): Promise<any> {return; }
 
   /**
    * A method that allows you to listen to events happening in the browser.
