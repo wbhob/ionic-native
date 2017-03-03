@@ -1,5 +1,6 @@
 import { get } from '../util';
 import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/observable/fromEvent';
 
 declare var window;
 declare var Promise;
@@ -86,6 +87,10 @@ export interface CordovaOptions {
    * Event name, this must be set if eventObservable is set to true
    */
   event?: string;
+  /**
+   * Element to attach the event listener to, this is optional, defaults to `window`
+   */
+  element?: any;
   /**
    * Set to true if the wrapped method returns a promise
    */
@@ -337,14 +342,12 @@ function wrapInstance(pluginObj: any, methodName: string, opts: any = {}) {
 
 /**
  * Wrap the event with an observable
- * @param event
+ * @param event even name
+ * @param element The element to attach the event listener to
  * @returns {Observable}
  */
-function wrapEventObservable(event: string): Observable<any> {
-  return new Observable(observer => {
-    window.addEventListener(event, observer.next.bind(observer), false);
-    return () => window.removeEventListener(event, observer.next.bind(observer), false);
-  });
+function wrapEventObservable(event: string, element: any = window): Observable<any> {
+  return Observable.fromEvent(element, event);
 }
 
 /**
@@ -375,14 +378,6 @@ function overrideFunction(pluginObj: any, methodName: string, args: any[], opts:
       return;
     }
 
-    let method = pluginInstance[methodName];
-    if (!method) {
-      observer.error({
-        error: 'no_such_method'
-      });
-      observer.complete();
-      return;
-    }
     pluginInstance[methodName] = observer.next.bind(observer);
   });
 }
@@ -403,7 +398,7 @@ export const wrap = function(pluginObj: any, methodName: string, opts: CordovaOp
     } else if (opts.observable) {
       return wrapObservable(pluginObj, methodName, args, opts);
     } else if (opts.eventObservable && opts.event) {
-      return wrapEventObservable(opts.event);
+      return wrapEventObservable(opts.event, opts.element);
     } else if (opts.otherPromise) {
       return wrapOtherPromise(pluginObj, methodName, args, opts);
     } else {
@@ -553,6 +548,55 @@ export function CordovaFunctionOverride(opts: any = {}) {
     return {
       value: function(...args: any[]) {
         return overrideFunction(this, methodName, opts);
+      }
+    };
+  };
+}
+
+/**
+ * @private
+ */
+export interface CordovaFiniteObservableOptions extends CordovaOptions {
+  /**
+   * Function that gets a result returned from plugin's success callback, and decides whether it is last value and observable should complete.
+   */
+  resultFinalPredicate?: (result: any) => boolean;
+  /**
+   * Function that gets called after resultFinalPredicate, and removes service data that indicates end of stream from the result.
+   */
+  resultTransform?: (result: any) => any;
+}
+
+/**
+ * @private
+ *
+ * Wraps method that returns an observable that can be completed. Provided opts.resultFinalPredicate dictates when the observable completes.
+ *
+ */
+export function CordovaFiniteObservable(opts: CordovaFiniteObservableOptions = {}) {
+  if (opts.observable === false) {
+    throw new Error('CordovaFiniteObservable decorator can only be used on methods that returns observable. Please provide correct option.');
+  }
+  opts.observable = true;
+  return (target: Object, methodName: string, descriptor: TypedPropertyDescriptor<any>) => {
+    return {
+      value: function(...args: any[]) {
+        let wrappedObservable: Observable<any> = wrap(this, methodName, opts).apply(this, args);
+        return new Observable<any>((observer) => {
+          let wrappedSubscription = wrappedObservable.subscribe({
+            next: (x) => {
+              observer.next(opts.resultTransform ? opts.resultTransform(x) : x);
+              if (opts.resultFinalPredicate && opts.resultFinalPredicate(x)) {
+                observer.complete();
+              }
+            },
+            error: (err) => { observer.error(err); },
+            complete: () => { observer.complete(); }
+          });
+          return () => {
+            wrappedSubscription.unsubscribe();
+          };
+        });
       }
     };
   };
