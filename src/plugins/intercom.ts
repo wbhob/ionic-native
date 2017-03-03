@@ -13,42 +13,10 @@
 import { Plugin, Cordova, CordovaProperty, CordovaInstance, InstanceProperty } from './plugin';
 import { Observable } from 'rxjs/Observable';
 
-/**
- * @name Intercom
- * @description
- * This plugin does something
- *
- * @usage
- * ```
- * import { Intercom } from 'ionic-native';
- *
- * Intercom.functionName('Hello', 123)
- *   .then((something: any) => doSomething(something))
- *   .catch((error: any) => console.log(error));
- *
- * ```
- */
-@Plugin({
-  pluginName: 'Intercom',
-  plugin: 'cordova-plugin-intercom', // npm package name, example: cordova-plugin-camera
-  pluginRef: 'cordova.plugins.intercom', // the variable reference to call the plugin, example: navigator.geolocation
-  repo: 'https://github.com/intercom/intercom-cordova', // the github repository URL for the plugin
-  install: '' // OPTIONAL install command, in case the plugin requires variables
-})
-export class Intercom {
-
-  /**
-   * This function does something
-   * @param arg1 {UserData} The User profile to update
-   * @return {Promise<any>} Returns a promise that resolves when something happens
-   */
-  @Cordova()
-  static updateUser(user: UserData): Promise<any> {
-    return; // We add return; here to avoid any IDE / Compiler errors
-  }
-
-}
 interface UserData {
+  /**
+   * More information on the user model can be found here: https://developers.intercom.com/reference#user-model
+   */
   type: string;
   id: string;
   user_id: string;
@@ -121,6 +89,9 @@ interface UserData {
 };
 
 interface Company {
+  /**
+   * More information on the company model can be found here: https://developers.intercom.com/reference#company-model
+   */
   type?: 'company';
   id?: string;
   created_at?: number;
@@ -135,4 +106,59 @@ interface Company {
   monthly_spend?: number;
   user_count?: number;
   plan?: number;
+}
+
+/**
+ * @name Intercom
+ * @description
+ * This plugin does something
+ *
+ * @usage
+ * ```
+ * import { Intercom } from 'ionic-native';
+ *
+ * Intercom.functionName('Hello', 123)
+ *   .then((something: any) => doSomething(something))
+ *   .catch((error: any) => console.log(error));
+ *
+ * ```
+ */
+@Plugin({
+  pluginName: 'Intercom',
+  plugin: 'cordova-plugin-intercom', // npm package name, example: cordova-plugin-camera
+  pluginRef: 'cordova.plugins.intercom', // the variable reference to call the plugin, example: navigator.geolocation
+  repo: 'https://github.com/intercom/intercom-cordova', // the github repository URL for the plugin
+  install: '' // OPTIONAL install command, in case the plugin requires variables
+})
+export class Intercom {
+
+  /**
+ * Update a user's attributes
+ * @return {Promise<any>} Returns a promise that resolves when unidentified user is registered
+ */
+  @Cordova()
+  static registerUnidentifiedUser(): Promise<any> {
+    return; // We add return; here to avoid any IDE / Compiler errors
+  }
+
+  /**
+* Update a user's attributes
+* @param options {Object} The user ID or email to regiser: format {userId: string} or {email:string}
+* @return {Promise<any>} Returns a promise that resolves when user is registered
+*/
+  @Cordova()
+  static registerIdentifiedUser(options: { userId?: string, email?: string }): Promise<any> {
+    return; // We add return; here to avoid any IDE / Compiler errors
+  }
+
+  /**
+   * Update a user's attributes
+   * @param attributes {UserData} The User profile to update
+   * @return {Promise<any>} Returns a promise that resolves when user is updated
+   */
+  @Cordova()
+  static updateUser(attributes: UserData): Promise<any> {
+    return; // We add return; here to avoid any IDE / Compiler errors
+  }
+
 }
