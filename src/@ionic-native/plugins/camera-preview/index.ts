@@ -23,7 +23,7 @@ export interface CameraPreviewOptions {
   height?: number;
 
   /** Choose the camera to use 'front' or 'rear', default 'front' */
-  camera?: string;
+  camera?: 'front' | 'rear' | string;
 
   /** Tap to take a photo, default true (picture quality by default : 85) */
   tapPhoto?: boolean;
